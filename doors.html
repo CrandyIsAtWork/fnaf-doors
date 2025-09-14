@@ -32,13 +32,13 @@
       position: absolute;
       bottom: 0;
       width: auto;
-      height: 70%; /* makes door tall enough to cover bottom */
+      height: 100%; /* make door fill full screen height */
       transition: transform 1s ease-in-out;
     }
 
-    /* Door open (slides up but still leaves a sliver visible) */
+    /* Door open (slides up but leaves ~10% visible at bottom) */
     .open {
-      transform: translateY(-85%);
+      transform: translateY(-90%);
     }
 
     #controls {
@@ -50,6 +50,7 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
+      z-index: 10; /* stay above door */
     }
 
     input, select, button {
