@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Door Control</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 { margin-bottom: 20px; }
+    input, select, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 1em;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Door Control</h1>
+
+  <label for="door-side">Select Door:</label>
+  <select id="door-side">
+    <option value="left">Left Door</option>
+    <option value="right">Right Door</option>
+  </select><br>
+
+  <input id="room-code" type="text" placeholder="Enter Room Code" maxlength="4"><br>
+  <button id="connect-btn">Connect to Room</button>
+
+  <div id="door-controls" style="display:none;">
+    <button id="toggle-door-btn">Toggle Door</button>
+  </div>
+
+  <p id="status">Not connected.</p>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const socket = io("https://8b503b84-132c-4149-bdb3-8bef57ec4fd8-00-2ga0ewjtdd2yk.worf.replit.dev");
+    
+    const connectBtn = document.getElementById("connect-btn");
+    const roomInput = document.getElementById("room-code");
+    const sideSelect = document.getElementById("door-side");
+    const toggleBtn = document.getElementById("toggle-door-btn");
+    const status = document.getElementById("status");
+    const doorControls = document.getElementById("door-controls");
+
+    let currentRoom = null;
+    let doorSide = null;
+    let isClosed = false;
+
+    connectBtn.addEventListener("click", () => {
+      currentRoom = roomInput.value.trim().toUpperCase();
+      doorSide = sideSelect.value;
+
+      if (!currentRoom) {
+        status.textContent = "Enter a valid room code!";
+        return;
+      }
+
+      socket.emit("join-door", { roomCode: currentRoom, side: doorSide });
+      status.textContent = `Connecting ${doorSide} door to room ${currentRoom}...`;
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      if (!currentRoom || !doorSide) return;
+
+      isClosed = !isClosed;
+      socket.emit("toggle-door", { roomCode: currentRoom, side: doorSide, closed: isClosed });
+      status.textContent = `${doorSide} door is now ${isClosed ? "CLOSED" : "OPEN"}`;
+    });
+
+    socket.on("door-joined", (data) => {
+      doorControls.style.display = "block";
+      status.textContent = `${data.side} door connected to room ${data.roomCode}`;
+    });
+
+    socket.on("door-error", (msg) => {
+      status.textContent = `Error: ${msg}`;
+    });
+  </script>
+</body>
+</html>
