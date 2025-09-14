@@ -3,59 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Door Control</title>
+  <title>Door</title>
   <style>
     body {
-      font-family: monospace;
+      margin: 0;
       background: #111;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       height: 100vh;
-      margin: 0;
+      overflow: hidden;
+      color: white;
+      font-family: monospace;
     }
-    h1 { margin-bottom: 20px; }
+
+    #door-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #door {
+      position: absolute;
+      bottom: 0;
+      width: auto;
+      height: 70%; /* makes door tall enough to cover bottom */
+      transition: transform 1s ease-in-out;
+    }
+
+    /* Door open (slides up but still leaves a sliver visible) */
+    .open {
+      transform: translateY(-85%);
+    }
+
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
     input, select, button {
-      margin: 5px;
-      padding: 10px;
       font-size: 1em;
+      padding: 8px 12px;
+      margin: 2px;
     }
+
     #status {
-      margin-top: 20px;
+      margin-top: 10px;
       font-size: 1.2em;
     }
   </style>
 </head>
 <body>
-  <h1>Door Control</h1>
-
-  <label for="door-side">Select Door:</label>
-  <select id="door-side">
-    <option value="left">Left Door</option>
-    <option value="right">Right Door</option>
-  </select><br>
-
-  <input id="room-code" type="text" placeholder="Enter Room Code" maxlength="4"><br>
-  <button id="connect-btn">Connect to Room</button>
-
-  <div id="door-controls" style="display:none;">
-    <button id="toggle-door-btn">Toggle Door</button>
+  <div id="door-container">
+    <img id="door" src="Images/door.png" alt="Door">
   </div>
 
-  <p id="status">Not connected.</p>
+  <div id="controls">
+    <label for="door-side">Select Door:</label>
+    <select id="door-side">
+      <option value="left">Left Door</option>
+      <option value="right">Right Door</option>
+    </select>
+    <input id="room-code" type="text" placeholder="Room Code" maxlength="4">
+    <button id="connect-btn">Connect</button>
+    <button id="toggle-door-btn" style="display:none;">Toggle Door</button>
+    <p id="status">Not connected.</p>
+  </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const socket = io("https://8b503b84-132c-4149-bdb3-8bef57ec4fd8-00-2ga0ewjtdd2yk.worf.replit.dev");
-    
+
     const connectBtn = document.getElementById("connect-btn");
     const roomInput = document.getElementById("room-code");
     const sideSelect = document.getElementById("door-side");
     const toggleBtn = document.getElementById("toggle-door-btn");
     const status = document.getElementById("status");
-    const doorControls = document.getElementById("door-controls");
+    const door = document.getElementById("door");
 
     let currentRoom = null;
     let doorSide = null;
@@ -80,10 +115,16 @@
       isClosed = !isClosed;
       socket.emit("toggle-door", { roomCode: currentRoom, side: doorSide, closed: isClosed });
       status.textContent = `${doorSide} door is now ${isClosed ? "CLOSED" : "OPEN"}`;
+
+      if (isClosed) {
+        door.classList.remove("open");
+      } else {
+        door.classList.add("open");
+      }
     });
 
     socket.on("door-joined", (data) => {
-      doorControls.style.display = "block";
+      toggleBtn.style.display = "inline-block";
       status.textContent = `${data.side} door connected to room ${data.roomCode}`;
     });
 
