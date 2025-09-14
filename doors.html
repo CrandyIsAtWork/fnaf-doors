@@ -79,7 +79,6 @@
     </select>
     <input id="room-code" type="text" placeholder="Room Code" maxlength="4">
     <button id="connect-btn">Connect</button>
-    <button id="toggle-door-btn" style="display:none;">Toggle Door</button>
     <p id="status">Not connected.</p>
   </div>
 
@@ -90,13 +89,11 @@
     const connectBtn = document.getElementById("connect-btn");
     const roomInput = document.getElementById("room-code");
     const sideSelect = document.getElementById("door-side");
-    const toggleBtn = document.getElementById("toggle-door-btn");
     const status = document.getElementById("status");
     const door = document.getElementById("door");
 
     let currentRoom = null;
     let doorSide = null;
-    let isClosed = false;
 
     connectBtn.addEventListener("click", () => {
       currentRoom = roomInput.value.trim().toUpperCase();
@@ -111,27 +108,23 @@
       status.textContent = `Connecting ${doorSide} door to room ${currentRoom}...`;
     });
 
-    toggleBtn.addEventListener("click", () => {
-      if (!currentRoom || !doorSide) return;
-
-      isClosed = !isClosed;
-      socket.emit("toggle-door", { roomCode: currentRoom, side: doorSide, closed: isClosed });
-      status.textContent = `${doorSide} door is now ${isClosed ? "CLOSED" : "OPEN"}`;
-
-      if (isClosed) {
-        door.classList.remove("open");
-      } else {
-        door.classList.add("open");
-      }
-    });
-
     socket.on("door-joined", (data) => {
-      toggleBtn.style.display = "inline-block";
       status.textContent = `${data.side} door connected to room ${data.roomCode}`;
+      document.getElementById("controls").style.display = "none"; // hide controls after joining
     });
 
     socket.on("door-error", (msg) => {
       status.textContent = `Error: ${msg}`;
+    });
+
+    // Guard controls the door → door listens for updates
+    socket.on("door-state", (data) => {
+      if (data.side !== doorSide) return;
+      if (data.closed) {
+        door.classList.remove("open");
+      } else {
+        door.classList.add("open");
+      }
     });
   </script>
 </body>
