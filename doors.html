@@ -112,6 +112,21 @@
       status.textContent = `${data.side} door connected to room ${data.roomCode}`;
       document.getElementById("controls").style.display = "none"; // hide controls after joining
     });
+    
+    // Listen for updates from the server (when the guard toggles this door)
+socket.on("door-state", (data) => {
+  if (data.side !== doorSide) return; // ignore if not this door
+
+  isClosed = data.closed;
+  if (isClosed) {
+    door.classList.remove("open");
+    status.textContent = `${doorSide} door CLOSED (by guard)`;
+  } else {
+    door.classList.add("open");
+    status.textContent = `${doorSide} door OPEN (by guard)`;
+  }
+});
+
 
     socket.on("door-error", (msg) => {
       status.textContent = `Error: ${msg}`;
